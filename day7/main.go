@@ -8,8 +8,8 @@ import (
 	"os"
 	"sort"
 
-	"modernc.org/mathutil"
 	"github.com/stevijo/adventofcode2019/day7/amplifier"
+	"modernc.org/mathutil"
 )
 
 var (
@@ -46,7 +46,7 @@ func part1(program []string) {
 	var (
 		maximumThruster int
 		permutation     sort.IntSlice = []int{0, 1, 2, 3, 4}
-		combination     []int
+		combination                   = make([]int, len(permutation))
 	)
 
 	runWithAllPermutations(permutation, func(permutation []int) {
@@ -55,7 +55,7 @@ func part1(program []string) {
 		chain.RunChain()
 		result := <-channel
 		if result > maximumThruster {
-			combination = permutation
+			_ = copy(combination, permutation)
 			maximumThruster = result
 		}
 	})
@@ -67,7 +67,7 @@ func part2(program []string) {
 	var (
 		maximumThruster int
 		permutation     sort.IntSlice = []int{5, 6, 7, 8, 9}
-		combination     []int
+		combination                   = make([]int, len(permutation))
 	)
 
 	runWithAllPermutations(permutation, func(permutation []int) {
@@ -77,7 +77,7 @@ func part2(program []string) {
 		chain.RunChain()
 		result := <-channel
 		if result > maximumThruster {
-			combination = permutation
+			_ = copy(combination, permutation)
 			maximumThruster = result
 		}
 	})

@@ -34,14 +34,14 @@ func newAmplifier(inputLine []string, phase int, connection *amplifier) *amplifi
 	}
 }
 
-type AmplifierChain struct {
+type amplifierChain struct {
 	amplifier   []*amplifier
 	endLoop     chan bool
 	resultChain chan int
 	lastElement int
 }
 
-func (a *AmplifierChain) RunChain() {
+func (a *amplifierChain) RunChain() {
 	waiting := make([]chan bool, len(a.amplifier))
 	for index, amp := range a.amplifier {
 		waiting[index] = amp.machine.RunMachine()
@@ -60,7 +60,7 @@ func (a *AmplifierChain) RunChain() {
 	}
 }
 
-func (a *AmplifierChain) SetLooping() {
+func (a *amplifierChain) SetLooping() {
 	if len(a.amplifier) < 1 {
 		return
 	}
@@ -85,8 +85,8 @@ func (a *AmplifierChain) SetLooping() {
 	}()
 }
 
-func NewAmplfifierChain(inputLine []string, phaseSequence []int, resultChain chan int) *AmplifierChain {
-	chain := &AmplifierChain{
+func NewAmplfifierChain(inputLine []string, phaseSequence []int, resultChain chan int) *amplifierChain {
+	chain := &amplifierChain{
 		amplifier: make([]*amplifier, len(phaseSequence)),
 	}
 	var amplifierBefore *amplifier

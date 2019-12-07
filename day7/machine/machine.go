@@ -8,7 +8,6 @@ import (
 
 type Machine interface {
 	RunMachine() chan bool
-	GetResult() int
 	SetOutput(output chan int)
 	SetInput(input chan int)
 }
@@ -36,10 +35,6 @@ type commandExecutor struct {
 	input    chan int
 	output   chan int
 	position uint
-}
-
-func (ce *commandExecutor) GetResult() int {
-	return ce.data[0]
 }
 
 func (ce *commandExecutor) nextCommand() (*Command, error) {
