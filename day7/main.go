@@ -44,15 +44,17 @@ func main() {
 
 func part1(program []string) {
 	var (
-		maximumThruster int
-		permutation     sort.IntSlice = []int{0, 1, 2, 3, 4}
-		combination                   = make([]int, len(permutation))
+		maximumThruster  int
+		instructionCount uint
+		permutation      sort.IntSlice = []int{0, 1, 2, 3, 4}
+		combination                    = make([]int, len(permutation))
 	)
 
 	runWithAllPermutations(permutation, func(permutation []int) {
 		channel := make(chan int, 1)
 		chain := amplifier.NewAmplfifierChain(program, permutation, channel)
 		chain.RunChain()
+		instructionCount += chain.GetIntCount()
 		result := <-channel
 		if result > maximumThruster {
 			_ = copy(combination, permutation)
@@ -60,14 +62,15 @@ func part1(program []string) {
 		}
 	})
 
-	fmt.Printf("Part 1: %v, with Permutation: %v\n", maximumThruster, combination)
+	fmt.Printf("Part 1: %v, with Permutation: %v, instructions run: %v\n", maximumThruster, combination, instructionCount)
 }
 
 func part2(program []string) {
 	var (
-		maximumThruster int
-		permutation     sort.IntSlice = []int{5, 6, 7, 8, 9}
-		combination                   = make([]int, len(permutation))
+		maximumThruster  int
+		permutation      sort.IntSlice = []int{5, 6, 7, 8, 9}
+		combination                    = make([]int, len(permutation))
+		instructionCount uint
 	)
 
 	runWithAllPermutations(permutation, func(permutation []int) {
@@ -75,6 +78,7 @@ func part2(program []string) {
 		chain := amplifier.NewAmplfifierChain(program, permutation, channel)
 		chain.SetLooping()
 		chain.RunChain()
+		instructionCount += chain.GetIntCount()
 		result := <-channel
 		if result > maximumThruster {
 			_ = copy(combination, permutation)
@@ -82,7 +86,7 @@ func part2(program []string) {
 		}
 	})
 
-	fmt.Printf("Part 2: %v, with Permutation: %v\n", maximumThruster, combination)
+	fmt.Printf("Part 2: %v, with Permutation: %v, instructions run: %v\n", maximumThruster, combination, instructionCount)
 }
 
 func runWithAllPermutations(array sort.IntSlice, program func([]int)) {

@@ -85,6 +85,15 @@ func (a *amplifierChain) SetLooping() {
 	}()
 }
 
+func (a *amplifierChain) GetIntCount() uint {
+	var intCount uint
+	for _, amp := range a.amplifier {
+		intCount += amp.machine.GetIntCount()
+	}
+
+	return intCount
+}
+
 func NewAmplfifierChain(inputLine []string, phaseSequence []int, resultChain chan int) *amplifierChain {
 	chain := &amplifierChain{
 		amplifier: make([]*amplifier, len(phaseSequence)),

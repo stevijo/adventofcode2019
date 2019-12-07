@@ -10,6 +10,7 @@ type Machine interface {
 	RunMachine() chan bool
 	SetOutput(output chan int)
 	SetInput(input chan int)
+	GetIntCount() uint
 }
 
 func NewMachine(inputLine []string, input, output chan int) Machine {
@@ -31,10 +32,15 @@ func NewMachine(inputLine []string, input, output chan int) Machine {
 }
 
 type commandExecutor struct {
-	data     []int
-	input    chan int
-	output   chan int
-	position uint
+	data      []int
+	input     chan int
+	output    chan int
+	position  uint
+	noOfSteps uint
+}
+
+func (ce *commandExecutor) GetIntCount() uint {
+	return ce.noOfSteps
 }
 
 func (ce *commandExecutor) nextCommand() (*Command, error) {
@@ -100,6 +106,8 @@ func (ce *commandExecutor) runMachineInternal() error {
 	if err != nil {
 		return err
 	}
+
+	ce.noOfSteps++
 
 	arguments := command.Evaluate(ce.data)
 
