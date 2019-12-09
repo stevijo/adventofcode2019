@@ -1,7 +1,7 @@
 package amplifier
 
 import (
-	"github.com/stevijo/adventofcode2019/day7/machine"
+	"github.com/stevijo/adventofcode2019/common/machine"
 )
 
 type amplifier struct {
@@ -9,7 +9,7 @@ type amplifier struct {
 	inputChan chan int
 }
 
-func newAmplifier(inputLine []string, phase int, connection *amplifier) *amplifier {
+func newAmplifier(inputProgram string, phase int, connection *amplifier) *amplifier {
 	var ampMachine machine.Machine
 	var inputChan chan int
 	if connection != nil {
@@ -18,14 +18,16 @@ func newAmplifier(inputLine []string, phase int, connection *amplifier) *amplifi
 
 		connection.machine.SetOutput(inputChan)
 
-		ampMachine = machine.NewMachine(inputLine, inputChan, nil)
+		ampMachine = machine.NewMachine(inputProgram)
+		ampMachine.SetInput(inputChan)
 	} else {
 		inputChan = make(chan int, 2)
 		inputChan <- phase
 		// initial input
 		inputChan <- 0
 
-		ampMachine = machine.NewMachine(inputLine, inputChan, nil)
+		ampMachine = machine.NewMachine(inputProgram)
+		ampMachine.SetInput(inputChan)
 	}
 
 	return &amplifier{
@@ -94,13 +96,13 @@ func (a *amplifierChain) GetIntCount() uint {
 	return intCount
 }
 
-func NewAmplfifierChain(inputLine []string, phaseSequence []int, resultChain chan int) *amplifierChain {
+func NewAmplfifierChain(inputProgram string, phaseSequence []int, resultChain chan int) *amplifierChain {
 	chain := &amplifierChain{
 		amplifier: make([]*amplifier, len(phaseSequence)),
 	}
 	var amplifierBefore *amplifier
 	for index, phase := range phaseSequence {
-		amplifierBefore = newAmplifier(inputLine, phase, amplifierBefore)
+		amplifierBefore = newAmplifier(inputProgram, phase, amplifierBefore)
 		chain.amplifier[index] = amplifierBefore
 	}
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/csv"
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -32,17 +32,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	csvReader := csv.NewReader(file)
-	inputLine, err := csvReader.Read()
-	if err != nil {
-		log.Fatal(err)
-	}
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	inputLine := scanner.Text()
 
 	part1(inputLine)
 	part2(inputLine)
 }
 
-func part1(program []string) {
+func part1(program string) {
 	var (
 		maximumThruster  int
 		instructionCount uint
@@ -65,7 +63,7 @@ func part1(program []string) {
 	fmt.Printf("Part 1: %v, with Permutation: %v, instructions run: %v\n", maximumThruster, combination, instructionCount)
 }
 
-func part2(program []string) {
+func part2(program string) {
 	var (
 		maximumThruster  int
 		permutation      sort.IntSlice = []int{5, 6, 7, 8, 9}
