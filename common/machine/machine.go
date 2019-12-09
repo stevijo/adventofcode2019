@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"strconv"
@@ -12,6 +13,23 @@ type Machine interface {
 	SetOutput(output chan int)
 	SetInput(input chan int)
 	GetIntCount() uint
+}
+
+func OutputToStdOut(machine Machine) {
+	if v, ok := machine.(*commandExecutor); ok {
+		output := make(chan int)
+		v.SetOutput(output)
+		done := v.RunMachine()
+	outLoop:
+		for {
+			select {
+			case <-done:
+				break outLoop
+			case result := <-output:
+				fmt.Println(result)
+			}
+		}
+	}
 }
 
 func NewMachine(inputProgram string) Machine {
@@ -48,8 +66,6 @@ func (ce *commandExecutor) nextCommand() (*Command, error) {
 	data := ce.data[ce.position:]
 
 	opCode := OpCode(data[0] % 100)
-
-	//fmt.Printf("OpCode: %v\n", opCode)
 
 	var lengthOfCommand uint
 
@@ -105,6 +121,18 @@ func (ce *commandExecutor) RunMachine() chan bool {
 	return done
 }
 
+func (ce *commandExecutor) SetValue(position Value, data int) {
+	if position.Immediate {
+		return
+	}
+
+	if position.Relative {
+		ce.data[position.Value+ce.relativeBase] = data
+	} else {
+		ce.data[position.Value] = data
+	}
+}
+
 func (ce *commandExecutor) runMachineInternal() error {
 	command, err := ce.nextCommand()
 	if err != nil {
@@ -117,32 +145,16 @@ func (ce *commandExecutor) runMachineInternal() error {
 
 	switch command.OpCode {
 	case Add:
-		if !command.Arguments[2].Immediate {
-			pos := command.Arguments[2].Value
-			if command.Arguments[2].Relative {
-				pos += ce.relativeBase
-			}
-			ce.data[pos] = arguments[0] + arguments[1]
-		}
+		ce.SetValue(command.Arguments[2], arguments[0]+arguments[1])
+
 		return ce.runMachineInternal()
 	case Multiply:
-		if !command.Arguments[2].Immediate {
-			pos := command.Arguments[2].Value
-			if command.Arguments[2].Relative {
-				pos += ce.relativeBase
-			}
-			ce.data[pos] = arguments[0] * arguments[1]
-		}
+		ce.SetValue(command.Arguments[2], arguments[0]*arguments[1])
+
 		return ce.runMachineInternal()
 	case Input:
-		if !command.Arguments[0].Immediate {
-			pos := command.Arguments[0].Value
-			if command.Arguments[0].Relative {
-				pos += ce.relativeBase
-			}
-			result := <-ce.input
-			ce.data[pos] = result
-		}
+		ce.SetValue(command.Arguments[0], <-ce.input)
+
 		return ce.runMachineInternal()
 	case Output:
 		ce.output <- arguments[0]
@@ -158,30 +170,20 @@ func (ce *commandExecutor) runMachineInternal() error {
 		}
 		return ce.runMachineInternal()
 	case LessThan:
-		if !command.Arguments[2].Immediate {
-			pos := command.Arguments[2].Value
-			if command.Arguments[2].Relative {
-				pos += ce.relativeBase
-			}
-			if arguments[0] < arguments[1] {
-				ce.data[pos] = 1
-			} else {
-				ce.data[pos] = 0
-			}
+		if arguments[0] < arguments[1] {
+			ce.SetValue(command.Arguments[2], 1)
+		} else {
+			ce.SetValue(command.Arguments[2], 0)
 		}
+
 		return ce.runMachineInternal()
 	case Equal:
-		if !command.Arguments[2].Immediate {
-			pos := command.Arguments[2].Value
-			if command.Arguments[2].Relative {
-				pos += ce.relativeBase
-			}
-			if arguments[0] == arguments[1] {
-				ce.data[pos] = 1
-			} else {
-				ce.data[pos] = 0
-			}
+		if arguments[0] == arguments[1] {
+			ce.SetValue(command.Arguments[2], 1)
+		} else {
+			ce.SetValue(command.Arguments[2], 0)
 		}
+
 		return ce.runMachineInternal()
 	case AdjustRelative:
 		ce.relativeBase += arguments[0]

@@ -38,9 +38,8 @@ func newAmplifier(inputProgram string, phase int, connection *amplifier) *amplif
 
 type amplifierChain struct {
 	amplifier   []*amplifier
-	endLoop     chan bool
+	looping     bool
 	resultChain chan int
-	lastElement int
 }
 
 func (a *amplifierChain) RunChain() {
@@ -53,12 +52,8 @@ func (a *amplifierChain) RunChain() {
 		<-wait
 	}
 
-	// if looping put last result into result channel
-	if a.endLoop != nil {
-		a.endLoop <- true
-		if a.resultChain != nil {
-			a.resultChain <- a.lastElement
-		}
+	if a.looping {
+		a.resultChain <- <-a.amplifier[0].inputChan
 	}
 }
 
@@ -67,24 +62,8 @@ func (a *amplifierChain) SetLooping() {
 		return
 	}
 
-	if a.endLoop != nil {
-		a.endLoop <- true
-	}
-	loopChan := make(chan int)
-	inputChan := a.amplifier[0].inputChan
-	a.endLoop = make(chan bool)
-	a.amplifier[len(a.amplifier)-1].machine.SetOutput(loopChan)
-	go func() {
-		for {
-			select {
-			case <-a.endLoop:
-				return
-			case result := <-loopChan:
-				a.lastElement = result
-				inputChan <- result
-			}
-		}
-	}()
+	a.looping = true
+	a.amplifier[len(a.amplifier)-1].machine.SetOutput(a.amplifier[0].inputChan)
 }
 
 func (a *amplifierChain) GetIntCount() uint {

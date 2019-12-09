@@ -43,10 +43,10 @@ func part1(data string) {
 	output := make(chan int, 1)
 	input := make(chan int, 2)
 	input <- 1
-	machine := machine.NewMachine(data)
-	machine.SetInput(input)
-	machine.SetOutput(output)
-	machine.RunMachine()
+	intComputer := machine.NewMachine(data)
+	intComputer.SetInput(input)
+	intComputer.SetOutput(output)
+	<-intComputer.RunMachine()
 	fmt.Printf("Part1: %v\n", <-output)
 }
 
@@ -54,9 +54,9 @@ func part2(data string) {
 	output := make(chan int, 1)
 	input := make(chan int, 2)
 	input <- 2
-	machine := machine.NewMachine(data)
-	machine.SetInput(input)
-	machine.SetOutput(output)
-	machine.RunMachine()
+	intComputer := machine.NewMachine(data)
+	intComputer.SetInput(input)
+	intComputer.SetOutput(output)
+	<-intComputer.RunMachine()
 	fmt.Printf("Part2: %v\n", <-output)
 }
