@@ -10,6 +10,7 @@ import (
 
 type Machine interface {
 	RunMachine() chan bool
+	SingleStep(input *int) StepState
 	SetOutput(output chan int)
 	SetInput(input chan int)
 	GetIntCount() uint
@@ -86,11 +87,10 @@ func (ce *commandExecutor) nextCommand() (*Command, error) {
 
 	data = data[:lengthOfCommand]
 
-	ce.position += lengthOfCommand
-
 	command := Command{
 		OpCode:    opCode,
 		Arguments: make([]Value, lengthOfCommand-1),
+		Length:    lengthOfCommand,
 	}
 
 	for i := uint(1); i < lengthOfCommand; i++ {
@@ -133,10 +133,19 @@ func (ce *commandExecutor) SetValue(position Value, data int) {
 	}
 }
 
-func (ce *commandExecutor) runMachineInternal() error {
+type StepState byte
+
+const (
+	Success StepState = iota
+	SingleEnd
+	Error
+	WaitingForInput
+)
+
+func (ce *commandExecutor) SingleStep(input *int) StepState {
 	command, err := ce.nextCommand()
 	if err != nil {
-		return err
+		return Error
 	}
 
 	ce.noOfSteps++
@@ -146,52 +155,69 @@ func (ce *commandExecutor) runMachineInternal() error {
 	switch command.OpCode {
 	case Add:
 		ce.SetValue(command.Arguments[2], arguments[0]+arguments[1])
-
-		return ce.runMachineInternal()
+		break
 	case Multiply:
 		ce.SetValue(command.Arguments[2], arguments[0]*arguments[1])
-
-		return ce.runMachineInternal()
+		break
 	case Input:
-		ce.SetValue(command.Arguments[0], <-ce.input)
-
-		return ce.runMachineInternal()
+		if input == nil {
+			return WaitingForInput
+		}
+		ce.SetValue(command.Arguments[0], *input)
+		break
 	case Output:
 		ce.output <- arguments[0]
-		return ce.runMachineInternal()
+		break
 	case JumpIfTrue:
 		if arguments[0] != 0 && arguments[1] >= 0 {
 			ce.position = uint(arguments[1])
+			command.Length = 0
 		}
-		return ce.runMachineInternal()
+		break
 	case JumpIfFalse:
 		if arguments[0] == 0 && arguments[1] >= 0 {
 			ce.position = uint(arguments[1])
+			command.Length = 0
 		}
-		return ce.runMachineInternal()
+		break
 	case LessThan:
 		if arguments[0] < arguments[1] {
 			ce.SetValue(command.Arguments[2], 1)
 		} else {
 			ce.SetValue(command.Arguments[2], 0)
 		}
-
-		return ce.runMachineInternal()
+		break
 	case Equal:
 		if arguments[0] == arguments[1] {
 			ce.SetValue(command.Arguments[2], 1)
 		} else {
 			ce.SetValue(command.Arguments[2], 0)
 		}
-
-		return ce.runMachineInternal()
+		break
 	case AdjustRelative:
 		ce.relativeBase += arguments[0]
-		return ce.runMachineInternal()
+		break
 	case End:
-		return nil
+		return SingleEnd
 	default:
-		return ce.runMachineInternal()
+	}
+
+	ce.position += command.Length
+
+	return Success
+}
+
+func (ce *commandExecutor) runMachineInternal() error {
+	for {
+		state := ce.SingleStep(nil)
+		switch state {
+		case WaitingForInput:
+			input := <-ce.input
+			ce.SingleStep(&input)
+			break
+		case SingleEnd:
+			return nil
+		}
 	}
 }
 
@@ -225,6 +251,7 @@ type Value struct {
 
 type Command struct {
 	OpCode    OpCode
+	Length    uint
 	Arguments []Value
 }
 

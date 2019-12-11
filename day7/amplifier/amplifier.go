@@ -43,13 +43,29 @@ type amplifierChain struct {
 }
 
 func (a *amplifierChain) RunChain() {
-	waiting := make([]chan bool, len(a.amplifier))
-	for index, amp := range a.amplifier {
-		waiting[index] = amp.machine.RunMachine()
+	// set phases
+	for i := 0; i < len(a.amplifier); i++ {
+		for a.amplifier[i].machine.SingleStep(nil) != machine.WaitingForInput {
+		}
+		input := <-a.amplifier[i].inputChan
+		a.amplifier[i].machine.SingleStep(&input)
 	}
+	for i := 0; ; i++ {
+		currentAmp := i % len(a.amplifier)
+		if i >= len(a.amplifier) && a.amplifier[currentAmp].machine.SingleStep(nil) == machine.WaitingForInput {
+			input := <-a.amplifier[currentAmp].inputChan
+			a.amplifier[currentAmp].machine.SingleStep(&input)
+		}
+		for {
+			state := a.amplifier[currentAmp].machine.SingleStep(nil)
+			if state == machine.WaitingForInput || state == machine.SingleEnd {
+				break
+			}
+		}
 
-	for _, wait := range waiting {
-		<-wait
+		if a.amplifier[len(a.amplifier)-1].machine.SingleStep(nil) == machine.SingleEnd {
+			break
+		}
 	}
 
 	if a.looping {
