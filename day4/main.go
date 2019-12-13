@@ -38,17 +38,21 @@ func main() {
 	startPoint, _ := strconv.Atoi(ranges[0])
 	endPoint, _ := strconv.Atoi(ranges[1])
 
-	var count uint
+	var countPart1, countPart2 uint
 	for i := startPoint; i <= endPoint; i++ {
-		if meetsRequirements(uint(i)) {
-			count++
+		if meetsRequirements(uint(i), false) {
+			countPart1++
+		}
+		if meetsRequirements(uint(i), true) {
+			countPart2++
 		}
 	}
 
-	fmt.Println(count)
+	fmt.Printf("Part1: %v\n", countPart1)
+	fmt.Printf("Part2: %v\n", countPart2)
 }
 
-func meetsRequirements(number uint) bool {
+func meetsRequirements(number uint, onlyDoubleDigits bool) bool {
 	var (
 		digits    = make(map[uint]byte)
 		lastDigit *uint
@@ -73,7 +77,9 @@ func meetsRequirements(number uint) bool {
 	}
 
 	for _, count := range digits {
-		if count == 2 {
+		if count == 2 && onlyDoubleDigits {
+			return true
+		} else if count > 1 && !onlyDoubleDigits {
 			return true
 		}
 	}

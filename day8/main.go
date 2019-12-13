@@ -32,7 +32,8 @@ func main() {
 	scanner.Scan()
 
 	image := scanner.Text()
-	fmt.Println(part1(image))
+	fmt.Printf("Part1: %v\n", part1(image))
+	fmt.Println("Part2:")
 	part2(image)
 }
 
