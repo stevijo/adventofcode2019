@@ -40,19 +40,16 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		var planet Planet
-		planet.Position = make([]int, 3)
-		planet.Velocity = make([]int, 3)
+		planet.Position = make(Vector, 3)
+		planet.Velocity = make(Vector, 3)
 
 		fmt.Sscanf(scanner.Text(), "<x=%v, y=%v, z=%v>", &planet.Position[0], &planet.Position[1], &planet.Position[2])
 
 		planets = append(planets, planet)
 	}
 
-	nextPlanets := make([]Planet, len(planets))
-	_ = copy(nextPlanets, planets)
-
 	fmt.Printf("Part1: %v\n", energy(planets))
-	fmt.Printf("Part2: %v\n", findCycles(nextPlanets))
+	fmt.Printf("Part2: %v\n", findCycles(planets))
 }
 
 // greatest common divisor (GCD) via Euclidean algorithm

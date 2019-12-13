@@ -14,6 +14,7 @@ type Machine interface {
 	SetOutput(output chan int)
 	SetInput(input chan int)
 	GetIntCount() uint
+	SetMemory(position, value int)
 }
 
 func OutputToStdOut(machine Machine) {
@@ -57,6 +58,10 @@ type commandExecutor struct {
 	relativeBase int
 	position     uint
 	noOfSteps    uint
+}
+
+func (ce *commandExecutor) SetMemory(position, value int) {
+	ce.data[position] = value
 }
 
 func (ce *commandExecutor) GetIntCount() uint {
