@@ -15,6 +15,7 @@ type Machine interface {
 	SetInput(input chan int)
 	GetIntCount() uint
 	SetMemory(position, value int)
+	GetMemory(position int) int
 }
 
 func OutputToStdOut(machine Machine) {
@@ -62,6 +63,10 @@ type commandExecutor struct {
 
 func (ce *commandExecutor) SetMemory(position, value int) {
 	ce.data[position] = value
+}
+
+func (ce *commandExecutor) GetMemory(position int) int {
+	return ce.data[position]
 }
 
 func (ce *commandExecutor) GetIntCount() uint {

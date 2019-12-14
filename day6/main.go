@@ -34,26 +34,27 @@ func main() {
 	for scanner.Scan() {
 		orbit := scanner.Text()
 		elements := strings.Split(orbit, ")")
-		planet, ok := planets[elements[0]]
+		planetOne, ok := planets[elements[0]]
 		if !ok {
-			planet = NewPlanet()
-			planets[elements[0]] = planet
+			planetOne = &Planet{}
+			planets[elements[0]] = planetOne
 		}
 
-		if planet != nil {
-			if newPlanet, ok := planets[elements[1]]; ok {
-				planet.AddPlanetToOrbit(newPlanet)
-			} else {
-				newPlanet := NewPlanet()
-				planet.AddPlanetToOrbit(newPlanet)
-				planets[elements[1]] = newPlanet
-			}
+		if planetTwo, ok := planets[elements[1]]; ok {
+			planetTwo.Orbits = planetOne
+		} else {
+			planetTwo := &Planet{}
+			planetTwo.Orbits = planetOne
+			planets[elements[1]] = planetTwo
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+	var indirectOrbits int
+	for _, planet := range planets {
+		indirectOrbits += len(planet.IndirectlyOrbits())
 	}
+
+	fmt.Printf("Part1: %v\n", indirectOrbits)
 
 	planetYou, _ := planets["YOU"]
 	pathFromCenterYou := planetYou.IndirectlyOrbits()
@@ -62,44 +63,23 @@ func main() {
 	pathFromCenterSanta := planetSanta.IndirectlyOrbits()
 
 	var commonPathElements int
-	for i, j := 0, 0; i < len(pathFromCenterSanta) && j < len(pathFromCenterYou); {
-		if pathFromCenterSanta[i] == pathFromCenterYou[j] {
+	for i := 0; i < len(pathFromCenterSanta) && i < len(pathFromCenterYou); i++ {
+		if pathFromCenterSanta[i] == pathFromCenterYou[i] {
 			commonPathElements++
 		} else {
 			break
 		}
-		i++
-		j++
 	}
-	fmt.Println(len(pathFromCenterSanta) + len(pathFromCenterYou) - commonPathElements*2)
-}
-
-func NewPlanet() *Planet {
-	return &Planet{
-		NextPlanets: make([]*Planet, 0),
-	}
+	fmt.Printf("Part2: %v\n", len(pathFromCenterSanta)+len(pathFromCenterYou)-commonPathElements*2)
 }
 
 type Planet struct {
-	NextPlanets []*Planet
-	Before      *Planet
-}
-
-func (p *Planet) AddPlanetToOrbit(newPlanet *Planet) {
-	p.NextPlanets = append(p.NextPlanets, newPlanet)
-	newPlanet.Before = p
-}
-
-func (p *Planet) DirectlyOrbits() int {
-	if p.Before != nil {
-		return 1
-	}
-	return 0
+	Orbits *Planet
 }
 
 func (p *Planet) IndirectlyOrbits() []*Planet {
-	if p.Before != nil {
-		return append(p.Before.IndirectlyOrbits(), p.Before)
+	if p.Orbits != nil {
+		return append(p.Orbits.IndirectlyOrbits(), p.Orbits)
 	}
 
 	return nil

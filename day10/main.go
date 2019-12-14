@@ -50,9 +50,9 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Part 1: %v\n", highestAmount)
+	fmt.Printf("Part1: %v\n", highestAmount)
 	coord := vaporizeAsteroids(angleMap)
-	fmt.Printf("Part 2: %v\n", coord.X*100+coord.Y)
+	fmt.Printf("Part2: %v\n", coord.X*100+coord.Y)
 }
 
 func vaporizeAsteroids(angleMap AngleMap) (coord Coordinate) {

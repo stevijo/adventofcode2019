@@ -30,28 +30,31 @@ func main() {
 	}
 
 	scanner := bufio.NewScanner(file)
-	var sumOfFuel uint
+	var sumOfFuelPart1, sumOfFuelPart2 uint
 	for scanner.Scan() {
 		number, err := strconv.Atoi(scanner.Text())
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		sumOfFuel += calculateFuel(number)
+		sumOfFuelPart1 += calculateFuel(number, false)
+		sumOfFuelPart2 += calculateFuel(number, true)
 	}
 
-	fmt.Println(sumOfFuel)
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+	fmt.Printf("Part1: %v\n", sumOfFuelPart1)
+	fmt.Printf("Part2: %v\n", sumOfFuelPart2)
 }
 
-func calculateFuel(input int) uint {
+func calculateFuel(input int, recursive bool) uint {
 	fuel := input/3 - 2
+
+	if !recursive {
+		return uint(fuel)
+	}
+
 	if fuel <= 0 {
 		return 0
 	}
 
-	return uint(fuel) + calculateFuel(fuel)
+	return uint(fuel) + calculateFuel(fuel, true)
 }

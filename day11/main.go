@@ -43,7 +43,6 @@ func main() {
 	var (
 		lowestY, lowestX, highestX, highestY int
 	)
-
 	for coordinate, _ := range robot.grid {
 		if coordinate.X > highestX {
 			highestX = coordinate.X
