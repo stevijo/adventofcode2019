@@ -113,17 +113,17 @@ func (r ReactionMap) Produce(reaction string, amount int, sideProducts map[strin
 	)
 
 	if amount%currentReaction.Output.Amount != 0 {
-		sideProducts[reaction] = currentReaction.Output.Amount - amount%currentReaction.Output.Amount
 		multiple++
+		sideProducts[reaction] = currentReaction.Output.Amount - amount%currentReaction.Output.Amount
 	}
 
 	for _, input := range currentReaction.Inputs {
 		neededAmount := input.Amount*multiple - sideProducts[input.Name]
-		if neededAmount >= 0 {
+		if neededAmount > 0 {
 			delete(sideProducts, input.Name)
 			consumedOre += r.Produce(input.Name, neededAmount, sideProducts)
 		} else {
-			sideProducts[input.Name] += neededAmount
+			sideProducts[input.Name] = neededAmount * -1
 		}
 	}
 
