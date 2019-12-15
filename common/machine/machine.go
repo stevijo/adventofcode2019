@@ -11,6 +11,7 @@ import (
 type Machine interface {
 	RunMachine() chan bool
 	SingleStep(input *int) StepState
+	Copy() Machine
 	SetOutput(output chan int)
 	SetInput(input chan int)
 	GetIntCount() uint
@@ -35,9 +36,9 @@ func OutputToStdOut(machine Machine) {
 	}
 }
 
-func NewMachine(inputProgram string) Machine {
+func NewMachine(inputProgram string, extraSpace int) Machine {
 	inputLine := strings.Split(inputProgram, ",")
-	data := make([]int, len(inputLine)+10000)
+	data := make([]int, len(inputLine)+extraSpace)
 	for index, inputChar := range inputLine {
 		number, err := strconv.Atoi(inputChar)
 		if err != nil {
@@ -59,6 +60,18 @@ type commandExecutor struct {
 	relativeBase int
 	position     uint
 	noOfSteps    uint
+}
+
+func (ce *commandExecutor) Copy() Machine {
+	newCommandExecutor := &commandExecutor{
+		data:         make([]int, len(ce.data)),
+		relativeBase: ce.relativeBase,
+		position:     ce.position,
+		noOfSteps:    ce.noOfSteps,
+	}
+
+	copy(newCommandExecutor.data, ce.data)
+	return newCommandExecutor
 }
 
 func (ce *commandExecutor) SetMemory(position, value int) {

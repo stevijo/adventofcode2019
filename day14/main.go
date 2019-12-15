@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -73,30 +74,10 @@ func main() {
 
 	fmt.Printf("Part1: %v\n", reactionMap.Produce("FUEL", 1, map[string]int{}))
 
-	var (
-		oreAmount    = 1000000000000
-		fuel         = 0
-		step         = oreAmount
-		sideProducts = map[string]int{}
-	)
-
-	for step > 0 {
-		copyMap := map[string]int{}
-		for key, value := range sideProducts {
-			copyMap[key] = value
-		}
-		consumedOre := reactionMap.Produce("FUEL", step, sideProducts)
-		if oreAmount-consumedOre >= 0 {
-			oreAmount -= consumedOre
-			fuel += step
-		} else {
-			// retry with smaller step
-			sideProducts = copyMap
-			step /= 2
-		}
-	}
-
-	fmt.Printf("Part2: %v\n", fuel)
+	const oreAmount = 1000000000000
+	fmt.Printf("Part2: %v\n", sort.Search(oreAmount, func(n int) bool {
+		return reactionMap.Produce("FUEL", n, map[string]int{}) > oreAmount
+	})-1)
 }
 
 type ReactionMap map[string]Reaction
@@ -109,11 +90,10 @@ func (r ReactionMap) Produce(reaction string, amount int, sideProducts map[strin
 
 	var (
 		consumedOre int
-		multiple    = amount / currentReaction.Output.Amount
+		multiple    = (amount-1)/currentReaction.Output.Amount + 1
 	)
 
 	if amount%currentReaction.Output.Amount != 0 {
-		multiple++
 		sideProducts[reaction] = currentReaction.Output.Amount - amount%currentReaction.Output.Amount
 	}
 
