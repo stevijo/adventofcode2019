@@ -149,19 +149,19 @@ func resolve(startPos [2]int, robot machine.Machine) {
 			switch status {
 			case 2:
 				copy(oxygen[:], newPosition[:])
+			case 1:
+				input <- reverse[i]
+				<-output
 				break
-			case 0:
-				continue
 			default:
 				break
 			}
 
-			input <- reverse[i]
-			<-output
-
 			if _, ok := coordinateMap[newPosition]; !ok {
 				coordinateMap[newPosition] = status
-				queue = append([][2]int{newPosition}, queue...)
+				if status != 0 {
+					queue = append([][2]int{newPosition}, queue...)
+				}
 			}
 		}
 		coordinateMap.Draw(currentPath)
@@ -175,7 +175,10 @@ func resolve(startPos [2]int, robot machine.Machine) {
 	fmt.Printf("Part1: %v\n", len(navigateSequence([...]int{0, 0}, oxygen, coordinateMap)))
 
 	var maxLength int
-	for pos, _ := range coordinateMap {
+	for pos, status := range coordinateMap {
+		if status == 0 {
+			continue
+		}
 		distance := len(navigateSequence(oxygen, pos, coordinateMap))
 		if distance > maxLength {
 			maxLength = distance
