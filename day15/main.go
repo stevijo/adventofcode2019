@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
 
 	"github.com/stevijo/adventofcode2019/common/machine"
 )
@@ -35,122 +34,149 @@ func main() {
 	scanner.Scan()
 	program := scanner.Text()
 
-	paths := findPaths(Path{Robot: machine.NewMachine(program, 15)})
-	sort.Slice(paths, func(i, j int) bool {
-		return paths[i].Steps < paths[j].Steps
-	})
-	var oxygen Path
-	for _, path := range paths {
-		if path.Oxygen {
-			oxygen = path
-			break
-		}
-	}
-
-	fmt.Printf("Part1: %v\n", oxygen.Steps)
-
-	oxygen.Steps = 0
-	pathsFromOxygen := findPaths(oxygen)
-	sort.Slice(pathsFromOxygen, func(i, j int) bool {
-		return pathsFromOxygen[i].Steps >= pathsFromOxygen[j].Steps
-	})
-
-	fmt.Printf("Part2: %v\n", pathsFromOxygen[0].Steps)
+	robot := machine.NewMachine(program, 15)
+	resolve([...]int{0, 0}, robot)
 }
 
-type Path struct {
-	Steps      int
-	Coordinate [2]int
-	Oxygen     bool
-	Robot      machine.Machine
-}
-
-func findPaths(startPath Path) []Path {
+func resolve(startPos [2]int, robot machine.Machine) {
 	var (
-		paths        []Path
-		currentPaths = []Path{startPath}
+		oxygen        [2]int
+		coordinateMap = map[[2]int]struct{}{startPos: struct{}{}}
+		input         = make(chan int)
+		output        = make(chan int)
+		queue         = [][2]int{startPos}
+		reverse       = map[int]int{
+			1: 2,
+			2: 1,
+			3: 4,
+			4: 3,
+		}
 	)
+	robot.SetInput(input)
+	robot.SetOutput(output)
+	done := robot.RunMachine()
 
-	for startPath.Robot.SingleStep(nil) == machine.Success {
-	}
+	for len(queue) > 0 {
+		currentPath := queue[0]
+		queue = queue[1:]
 
-	if startPath.Robot.SingleStep(nil) == machine.SingleEnd {
-		return nil
-	}
+		inputSequence := navigateSequence(startPos, currentPath, coordinateMap)
+		for _, step := range inputSequence {
+			input <- step
+			<-output
+		}
 
-	for len(currentPaths) > 0 {
-		nextPaths := make([]Path, 0)
-		for _, currentPath := range currentPaths {
-			for i := 1; i <= 4; i++ {
-				var (
-					testRobot   = currentPath.Robot.Copy()
-					newPosition = [2]int{0, 0}
-					output      = make(chan int, 1)
-					newPath     Path
-				)
-				testRobot.SetOutput(output)
+		for i := 1; i <= 4; i++ {
+			var (
+				newPosition [2]int
+			)
+			copy(newPosition[:], currentPath[:])
+			switch i {
+			case 1:
+				newPosition[1]++
+				break
+			case 2:
+				newPosition[1]--
+				break
+			case 3:
+				newPosition[0]--
+				break
+			case 4:
+				newPosition[0]++
+				break
+			}
 
-				copy(newPosition[:], currentPath.Coordinate[:])
-				switch i {
-				case 1:
-					newPosition[1]++
-					break
-				case 2:
-					newPosition[1]--
-					break
-				case 3:
-					newPosition[0]--
-					break
-				case 4:
-					newPosition[0]++
-					break
-				}
+			input <- i
+			status := <-output
 
-				// Run unitl next input
-				testRobot.SingleStep(&i)
-				for testRobot.SingleStep(nil) == machine.Success {
-				}
+			switch status {
+			case 2:
+				copy(oxygen[:], newPosition[:])
+				break
+			case 0:
+				continue
+			default:
+				break
+			}
 
-				status := <-output
+			input <- reverse[i]
+			<-output
 
-				if status == 2 {
-					newPath = Path{
-						Coordinate: newPosition,
-						Oxygen:     true,
-						Steps:      currentPath.Steps + 1,
-						Robot:      testRobot,
-					}
-				} else if status == 1 {
-					newPath = Path{
-						Coordinate: newPosition,
-						Oxygen:     false,
-						Steps:      currentPath.Steps + 1,
-						Robot:      testRobot,
-					}
-				} else {
-					continue
-				}
-
-				var (
-					existingPath *Path
-				)
-				for idx, path := range paths {
-					if path.Coordinate == newPath.Coordinate {
-						existingPath = &paths[idx]
-						break
-					}
-				}
-
-				if existingPath == nil {
-					nextPaths = append(nextPaths, newPath)
-				} else if existingPath.Steps > newPath.Steps {
-					existingPath.Steps = newPath.Steps
-				}
+			if _, ok := coordinateMap[newPosition]; !ok {
+				coordinateMap[newPosition] = struct{}{}
+				queue = append([][2]int{newPosition}, queue...)
 			}
 		}
-		paths = append(paths, currentPaths...)
-		currentPaths = nextPaths
+		startPos = currentPath
 	}
 
-	return paths
+	close(input)
+	close(output)
+	<-done
+
+	fmt.Printf("Part1: %v\n", len(navigateSequence([...]int{0, 0}, oxygen, coordinateMap)))
+
+	var maxLength int
+	for pos, _ := range coordinateMap {
+		distance := len(navigateSequence(oxygen, pos, coordinateMap))
+		if distance > maxLength {
+			maxLength = distance
+		}
+	}
+	fmt.Printf("Part2: %v\n", maxLength)
+}
+
+func navigateSequence(pos, target [2]int, currentPaths map[[2]int]struct{}) (inputSequence []int) {
+	var (
+		link       [][2]int
+		directions = [][2]int{
+			{0, 1},
+			{0, -1},
+			{-1, 0},
+			{1, 0},
+		}
+		queue = [][][2]int{{
+			target,
+		}}
+		visited = map[[2]int]bool{}
+	)
+
+	for len(queue) > 0 {
+		item := queue[0]
+		queue = queue[1:]
+
+		if item[0] == pos {
+			link = item[1:]
+			break
+		}
+
+		for _, direction := range directions {
+			newPosition := item[0]
+			newPosition[0] += direction[0]
+			newPosition[1] += direction[1]
+
+			if _, ok := currentPaths[newPosition]; ok && !visited[newPosition] {
+				queue = append(queue, append([][2]int{newPosition}, item...))
+				visited[newPosition] = true
+			}
+		}
+	}
+
+	for _, path := range link {
+		diff := [...]int{
+			path[0] - pos[0],
+			path[1] - pos[1],
+		}
+		var direction int
+		for idx, dir := range directions {
+			if dir == diff {
+				direction = idx + 1
+			}
+		}
+		pos = path
+
+		inputSequence = append(inputSequence, direction)
+	}
+
+	return inputSequence
 }
