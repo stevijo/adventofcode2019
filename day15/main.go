@@ -146,9 +146,6 @@ func resolve(startPos [2]int, robot machine.Machine) {
 			input <- i
 			status := <-output
 
-			_, ok := coordinateMap[newPosition]
-			coordinateMap[newPosition] = status
-
 			switch status {
 			case 2:
 				copy(oxygen[:], newPosition[:])
@@ -162,7 +159,8 @@ func resolve(startPos [2]int, robot machine.Machine) {
 			input <- reverse[i]
 			<-output
 
-			if !ok {
+			if _, ok := coordinateMap[newPosition]; !ok {
+				coordinateMap[newPosition] = status
 				queue = append([][2]int{newPosition}, queue...)
 			}
 		}
@@ -211,9 +209,7 @@ func navigateSequence(pos, target [2]int, currentPaths map[[2]int]int) (inputSeq
 		}
 
 		for _, direction := range directions {
-			newPosition := item[0]
-			newPosition[0] += direction[0]
-			newPosition[1] += direction[1]
+			newPosition := [...]int{item[0][0] + direction[0], item[0][1] + direction[1]}
 
 			if status, ok := currentPaths[newPosition]; ok && (status == 1 || status == 2) && !visited[newPosition] {
 				queue = append(queue, append([][2]int{newPosition}, item...))
