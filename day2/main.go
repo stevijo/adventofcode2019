@@ -34,7 +34,7 @@ func main() {
 	scanner.Scan()
 	program := scanner.Text()
 
-	part1 := machine.NewMachine(program)
+	part1 := machine.NewMachine(program, 10000)
 	part1.SetMemory(1, 12)
 	part1.SetMemory(2, 2)
 	<-part1.RunMachine()
@@ -43,7 +43,7 @@ func main() {
 
 	for i := 0; i <= 99; i++ {
 		for j := 0; j <= 99; j++ {
-			part2 := machine.NewMachine(program)
+			part2 := machine.NewMachine(program, 10000)
 			part2.SetMemory(1, i)
 			part2.SetMemory(2, j)
 			<-part2.RunMachine()

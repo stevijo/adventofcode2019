@@ -45,7 +45,7 @@ func part2(code string) (score int) {
 		paddlePosition int
 		output         = make(chan int)
 		input          = make(chan int, 1)
-		machine        = machine.NewMachine(code)
+		machine        = machine.NewMachine(code, 10000)
 	)
 
 	machine.SetInput(input)
@@ -91,7 +91,7 @@ func part2(code string) (score int) {
 
 func part1(code string) (blocks uint) {
 	output := make(chan int)
-	machine := machine.NewMachine(code)
+	machine := machine.NewMachine(code, 10000)
 	machine.SetOutput(output)
 	done := machine.RunMachine()
 

@@ -39,7 +39,7 @@ func main() {
 		input  = make(chan int, 1)
 	)
 	input <- 1
-	part1 := machine.NewMachine(program)
+	part1 := machine.NewMachine(program, 10000)
 	part1.SetInput(input)
 	part1.SetOutput(output)
 	done := part1.RunMachine()
@@ -59,7 +59,7 @@ part1Loop:
 
 	input <- 5
 	output = make(chan int, 1)
-	part2 := machine.NewMachine(program)
+	part2 := machine.NewMachine(program, 10000)
 	part2.SetInput(input)
 	part2.SetOutput(output)
 	<-part2.RunMachine()

@@ -18,7 +18,7 @@ func newAmplifier(inputProgram string, phase int, connection *amplifier) *amplif
 
 		connection.machine.SetOutput(inputChan)
 
-		ampMachine = machine.NewMachine(inputProgram)
+		ampMachine = machine.NewMachine(inputProgram, 10000)
 		ampMachine.SetInput(inputChan)
 	} else {
 		inputChan = make(chan int, 2)
@@ -26,7 +26,7 @@ func newAmplifier(inputProgram string, phase int, connection *amplifier) *amplif
 		// initial input
 		inputChan <- 0
 
-		ampMachine = machine.NewMachine(inputProgram)
+		ampMachine = machine.NewMachine(inputProgram, 10000)
 		ampMachine.SetInput(inputChan)
 	}
 

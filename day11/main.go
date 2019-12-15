@@ -80,7 +80,7 @@ type Robot struct {
 }
 
 func NewRobot(code string) *Robot {
-	robot := machine.NewMachine(code)
+	robot := machine.NewMachine(code, 10000)
 
 	return &Robot{
 		machine: robot,
