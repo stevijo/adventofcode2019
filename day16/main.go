@@ -144,13 +144,14 @@ func calculateFFT(bigInput []int, phases, offset, end int) {
 				wg.Done()
 			}(i)
 		}
-		calculateFFT(bigInput, 1, easyCalculation, len(bigInput))
 		wg.Wait()
 		close(resultChannel)
 
 		for output := range resultChannel {
 			bigInput[output.idx+offset] = output.result
 		}
+
+		calculateFFT(bigInput, 1, easyCalculation, len(bigInput))
 		calculateFFT(bigInput, phases-1, offset, end)
 	}
 }
