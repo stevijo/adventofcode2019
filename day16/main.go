@@ -60,8 +60,11 @@ func main() {
 }
 
 func binom(n, k int) int {
-	if k == 0 {
+	if k <= 0 {
 		return 1
+	}
+	if 2*k > n {
+		return binom(n, n-k)
 	}
 
 	return n * binom(n-1, k-1) / k
@@ -73,7 +76,7 @@ func binomModPrime(n, k, p int) int {
 	} else if n < p && k < p {
 		return binom(n, k) % p
 	}
-	return binomModPrime(n/p, k/p, p) * binomModPrime(n%p, k%p, p) % p
+	return binomModPrime(n/p, k/p, p) * binom(n%p, k%p) % p
 }
 
 func binomMod10(n, k int) int {
