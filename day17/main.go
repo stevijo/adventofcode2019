@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/stevijo/adventofcode2019/common/machine"
 )
@@ -234,12 +235,11 @@ search:
 	go func() {
 		for {
 			select {
-			case <-done:
-				return
 			case result := <-output:
 				if result > 127 {
 					part2Result = result
-					break
+					done <- true
+					return
 				}
 				fmt.Print(string(result))
 				break
@@ -255,9 +255,11 @@ part2Loop:
 		}
 
 		if part2Robot.SingleStep(nil) == machine.SingleEnd {
-			done <- true
+			<-done
 			break part2Loop
 		}
+
+		<-time.After(time.Millisecond * 100)
 
 		if len(inputs) > 0 {
 			fmt.Print(inputs[0])
@@ -270,6 +272,7 @@ part2Loop:
 			intTemp := int('\n')
 			fmt.Println()
 			part2Robot.SingleStep(&intTemp)
+
 			inputs = inputs[1:]
 		}
 	}
