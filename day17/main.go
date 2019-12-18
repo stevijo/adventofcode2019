@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/stevijo/adventofcode2019/common/machine"
@@ -232,22 +233,38 @@ search:
 	part2Robot.SetOutput(output)
 
 	done = make(chan bool)
+	var videoFeedStarted atomic.Value
+	videoFeedStarted.Store(false)
 	go func() {
+		dimensions := (xMax)*(yMax+1) + 1
+		fmt.Println(dimensions)
+		currentPosition := 0
 		for {
+			videoFeed := videoFeedStarted.Load().(bool)
+
 			select {
 			case result := <-output:
+				if videoFeed && currentPosition == dimensions {
+					currentPosition = 0
+					fmt.Printf("\x1b[%dF", yMax+1)
+				}
+
 				if result > 127 {
 					part2Result = result
 					done <- true
 					return
 				}
+
 				fmt.Print(string(result))
+				if videoFeed {
+					currentPosition++
+				}
 				break
 			}
 		}
 	}()
 
-	inputs := []string{mainString, aString, bString, cString, "n"}
+	inputs := []string{mainString, aString, bString, cString, "y"}
 part2Loop:
 	for {
 
@@ -274,8 +291,14 @@ part2Loop:
 			part2Robot.SingleStep(&intTemp)
 
 			inputs = inputs[1:]
+			if len(inputs) == 0 {
+				// video feed started
+				videoFeedStarted.Store(true)
+				fmt.Print("\x1b[?25l")
+			}
 		}
 	}
+	fmt.Print("\x1b[?25h")
 
 	fmt.Printf("Part2: %v\n", part2Result)
 }
